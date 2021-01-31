@@ -3,3 +3,5 @@ __pycache__
 *.ipynb
 .python-version
 venv/
+dist/
+data_steps.egg-info/
