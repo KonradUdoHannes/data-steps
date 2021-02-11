@@ -15,8 +15,6 @@ some required cleaning steps become apparent
 
 ## Usage
 
-
-
 Wrap your data in an instance
 
 ```python
@@ -26,7 +24,7 @@ my_data = DataSteps(my_pandas_df)
 
 #register transformation steps
 
-@my_data.step()
+@my_data.step
 def data_transformation(data):
     #transfromation steps
     ...

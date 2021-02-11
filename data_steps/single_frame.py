@@ -8,14 +8,13 @@ class StepCollection:
     def __init__(self):
         self._collection = {}
         
-    def update_step(self,func,*args,**kwargs):
-        active = kwargs.pop('active',True)
+    def update_step(self,func,priority,active=True):
         if active:
-            self.add_step(func,*args,**kwargs)
+            self.add_step(func,priority)
         elif func.__name__ in self._collection:
             self.remove_step(func)
     
-    def add_step(self,func,priority=5):
+    def add_step(self,func,priority):
         self._collection[func.__name__] = Step(priority,func)
     
     def remove_step(self,func):
@@ -50,19 +49,34 @@ class DataSteps:
             raise Exception('Original data not set. ')
         return self._original
     
-    def step(self,*args,**kwargs):
+    def step(self,function=None,*,priority=5,active=True):
         """Decorator registering functions as steps.
         
+        The decorator can be used in a bare version, i.e.
+        as <instance>.step. This should be sufficient
+        as long as the transformation order does not matter
+        or one doesn't want to remove steps.
+        Alternatively the decorator can be used with keyword
+        arguments as <instance>.step(...)
+        
         Args:
+            priority (int, optional): Priority of the transformation
+                lower priorities are executed first, so prioiriteis
+                should be read as 1st, 2nd etc. Default value is 5.
             active (bool, optional): Function is registered
-            as a step. Defaults to True.
-            priority (int, optional): Priority
+                as a step. Defaults to True.
         
         """
+            
         def register_function(func):
-            self._steps.update_step(func,*args,**kwargs)
+            self._steps.update_step(func,priority=priority,active=active)
             return func
-        return register_function
+        
+        if function is None:
+            return register_function
+        
+        return register_function(function)
+            
     
     @property
     def steps(self):
@@ -90,8 +104,8 @@ class DataSteps:
         
         Args:
             n (int): Step after which to return
-            the data. Using -1 as input returns the orignal
-            data.
+                the data. Using -1 as input returns the orignal
+                data.
         """
         new_data = self.original.copy()
         for step in list(self._steps)[:n+1]:
