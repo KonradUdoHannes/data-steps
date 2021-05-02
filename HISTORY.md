@@ -8,3 +8,14 @@
 
 - Changed step decorator to work in bare format,
   i.e. `<instance>.step` instead of `<instance>.step()`
+
+
+## Planned releases
+
+### 0.2 (planned)
+
+- support for additional argument in steps
+
+### 0.3
+
+- support for exporting a datasteps pipeline as a string

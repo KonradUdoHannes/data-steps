@@ -13,32 +13,55 @@ throughout the project. A prime example
 is data cleaning where only later in the project
 some required cleaning steps become apparent
 
-## Usage
+## Features
+
+After wrapping a pandas DataFrame in a `DataSteps`
+class. The following features are available.
+
+- register data transformatios with the instances `.step`
+    decorator
+- get an overview of the registered steps with `.steps`
+- inspect the original data the fully transformed data
+    and any partially transformed data in between
+- change parameters of registered steps
+- interactively redefine or deactivate steps in jupyter notebooks
+
+## Usage Example
 
 Wrap your data in an instance
 
 ```python
 from data_steps import DataSteps
 
-my_data = DataSteps(my_pandas_df)
+data = DataSteps(my_pandas_df)
 
 #register transformation steps
 
-@my_data.step
-def data_transformation(data):
+@data.step
+def data_transformation(df):
     #transfromation steps
     ...
-    return transformed data
+    return transformed_df
+
+@data.step
+def transform_with_parameters(df,param1,param2=4):
+    #transfromation steps
+    ...
+    return transformed_df
 
 #access original data
-my_data.original
+data.original
+
+#set or update transformation parameters
+data.update_step_kwargs('transform_with_parameters',{'param1':10})
 
 #access data after all transformation steps
-my_data.transformed
+data.transformed
+
 
 #get an overview of the registered steps
-my_data.steps
+data.steps
 
 #only execute some steps to help debugging transformations
-my_data.partial_transform(0)
+data.partial_transform(0)
 ```
