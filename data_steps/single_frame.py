@@ -162,5 +162,22 @@ class DataSteps:
         self._original
         return self
 
-    def update_step_kwargs(self, function_name, kwargs):
-        self._steps.update_step_kwargs(function_name, kwargs)
+    def update_step_kwargs(self, step_name: str, kwargs):
+        """Set set or update keyworkd arguments for steps.
+
+        Changes the additional arguments used by the steps.
+        The first argument of each step is always a dataframe,
+        but all firther arguments can be passed as keyword
+        arguments. In order to use the transformed property
+        of data steps all required arguments must be set.
+
+
+        Args:
+            step_name (str): Name of the step for which
+                parameters should be updated. This is equal
+                to the name of the function that is decorated
+                with the step decorator.
+            kwargs (dict): Keyword argument which are used
+                for the update.
+        """
+        self._steps.update_step_kwargs(step_name, kwargs)
