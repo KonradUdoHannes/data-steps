@@ -8,4 +8,3 @@
 
 - Changed step decorator to work in bare format,
   i.e. `<instance>.step` instead of `<instance>.step()`
-
