@@ -1,36 +1,4 @@
-import pandas as pd
-import pytest
-
-from data_steps import DataSteps
 from data_steps.single_frame import StepCollection
-
-
-@pytest.fixture
-def raw_frame():
-    return pd.DataFrame(
-        {
-            "Col1": [1, 2, 3, 4, 5],
-            "Col2": ["A", "B", "C", "D", "E"],
-            "Col3": [0.01, 0.1, 1, 10, 100],
-        }
-    )
-
-
-def test_orig_frame(raw_frame):
-    data = DataSteps(raw_frame)
-    assert data.original.equals(raw_frame)
-    assert data.transformed.equals(raw_frame)
-
-    @data.step
-    def inc_col1(frame):
-        return frame.assign(Col1=lambda df: df["Col1"] + 1)
-
-    print(data._steps._collection)
-
-    assert data.original.equals(raw_frame)
-    assert len(data.steps) == 1
-    assert not data.transformed.equals(raw_frame)
-    assert data.original.pipe(inc_col1).equals(data.transformed)
 
 
 def test_step_collectio_add():
@@ -131,3 +99,9 @@ def test_remove_function():
     assert len(sc.ordered_steps) == 1
     sc.remove_step(sample_function)
     assert len(sc.ordered_steps) == 0
+
+
+def test_empty_overview():
+    sc = StepCollection()
+
+    assert sc.step_overview().empty

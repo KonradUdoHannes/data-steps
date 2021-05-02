@@ -30,6 +30,10 @@ class StepCollection:
         return map(attrgetter("function"), self.ordered_steps)
 
     def step_overview(self):
+        steps = list(self.ordered_steps)
+        if len(steps) == 0:
+            return pd.DataFrame()
+
         overview = (
             pd.DataFrame(list(self.ordered_steps))
             .assign(function_name=lambda df: df["function"].map(lambda x: x.__name__))
