@@ -1,14 +1,40 @@
-from collections import namedtuple
+import inspect
+from dataclasses import dataclass, field
 from operator import attrgetter
+from typing import Callable
 
 import pandas as pd
 
-Step = namedtuple("Step", "priority function")
+
+@dataclass
+class Step:
+    priority: int
+    function: Callable
+    function_kwargs: dict = field(init=False)
+
+    def __post_init__(self):
+        argspec = inspect.getfullargspec(self.function)
+        if len(argspec.args) == 0:
+            raise ValueError("Steps need at least one argument")
+        self._expected_kw = argspec.args[1:] + argspec.kwonlyargs
+        args_defaults = argspec.defaults or []
+        kwonly_defaults = argspec.kwonlydefaults or {}
+        combined_arg_defaults = reversed(list(zip(reversed(argspec.args), reversed(args_defaults))))
+
+        self.function_kwargs = {
+            arg: value for arg, value in combined_arg_defaults
+        } | kwonly_defaults
+
+    def update_function_kwargs(self, kwargs):
+        for key in kwargs:
+            if key not in self._expected_kw:
+                raise ValueError(f"Unexpected argument {key} for {self.function.__name__}")
+        self.function_kwargs |= kwargs
 
 
 class StepCollection:
     def __init__(self):
-        self._collection = {}
+        self._collection: dict[str, Step] = {}
 
     def update_step(self, func, priority, active=True):
         if active:
@@ -22,12 +48,15 @@ class StepCollection:
     def remove_step(self, func):
         del self._collection[func.__name__]
 
+    def update_step_kwargs(self, function_name, kwargs):
+        self._collection[function_name].update_function_kwargs(kwargs)
+
     @property
     def ordered_steps(self):
         return sorted(self._collection.values(), key=attrgetter("priority"))
 
     def __iter__(self):
-        return map(attrgetter("function"), self.ordered_steps)
+        return map(attrgetter("function", "function_kwargs"), self.ordered_steps)
 
     def step_overview(self):
         steps = list(self.ordered_steps)
@@ -38,18 +67,19 @@ class StepCollection:
             pd.DataFrame(list(self.ordered_steps))
             .assign(function_name=lambda df: df["function"].map(lambda x: x.__name__))
             .drop(["function"], axis=1)
+            .loc[:, ["priority", "function_name", "function_kwargs"]]
         )
         overview.index.rename("application_order", inplace=True)
         return overview
 
 
 class DataSteps:
-    def __init__(self, original=None):
+    def __init__(self, original: pd.DataFrame = None):
         self._steps = StepCollection()
         self._original = original
 
     @property
-    def original(self):
+    def original(self) -> pd.DataFrame:
         """Original data before any transformations."""
         if self._original is None:
             raise Exception("Original data not set. ")
@@ -99,11 +129,11 @@ class DataSteps:
     def transformed(self):
         """Transformed data after all transformations."""
         new_data = self.original.copy()
-        for step in self._steps:
-            new_data = step(new_data)
+        for step, kwargs in self._steps:
+            new_data = step(new_data, **kwargs)
         return new_data
 
-    def partial_transform(self, n):
+    def partial_transform(self, n: int):
         """Shows transformed data after the nth step.
 
         Args:
@@ -112,11 +142,11 @@ class DataSteps:
                 data.
         """
         new_data = self.original.copy()
-        for step in list(self._steps)[: n + 1]:
-            new_data = step(new_data)
+        for step, kwargs in list(self._steps)[: n + 1]:
+            new_data = step(new_data, **kwargs)
         return new_data
 
-    def set_original(self, original):
+    def set_original(self, original: pd.DataFrame) -> None:
         """Set the original of the data.
 
         This method is intended to to set original
@@ -131,3 +161,6 @@ class DataSteps:
         """
         self._original
         return self
+
+    def update_step_kwargs(self, function_name, kwargs):
+        self._steps.update_step_kwargs(function_name, kwargs)

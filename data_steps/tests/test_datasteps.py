@@ -71,7 +71,7 @@ def test_partial_application(raw_frame):
     data = DataSteps(raw_frame)
 
     @data.step
-    def inc_col4(frame):
+    def add_col4(frame):
         return frame.assign(Col4="constant")
 
     @data.step(priority=10)
@@ -84,3 +84,16 @@ def test_partial_application(raw_frame):
     assert "Col5" not in data.partial_transform(0)
     assert "Col4" in data.partial_transform(1)
     assert "Col5" in data.partial_transform(1)
+
+
+def test_step_with_args(raw_frame):
+    data = DataSteps(raw_frame)
+
+    @data.step
+    def inc_col1(frame, value=10):
+        return frame.assign(Col4=value)
+
+    assert data.transformed.Col4.unique()[0] == 10
+
+    data.update_step_kwargs("inc_col1", {"value": 20})
+    assert data.transformed.Col4.unique()[0] == 20
