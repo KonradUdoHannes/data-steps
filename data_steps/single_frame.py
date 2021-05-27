@@ -25,11 +25,30 @@ class Step:
             arg: value for arg, value in combined_arg_defaults
         } | kwonly_defaults
 
+    @property
+    def name(self):
+        return self.function.__name__
+
     def update_function_kwargs(self, kwargs):
         for key in kwargs:
             if key not in self._expected_kw:
                 raise ValueError(f"Unexpected argument {key} for {self.function.__name__}")
         self.function_kwargs |= kwargs
+
+    def apply(self, data):
+        """Returns the results of applying the steps.
+
+        Result are split in two. The first return value
+        is the primary result intended to be passed along
+        in a pipeline applications. The secondary result
+        is not intended to be passed along and therefore optional.
+        In case no secondary results have been calculated None is returned
+        such that the return value is always a two tuple.
+        """
+        step_result = self.function(data, **self.function_kwargs)
+        if isinstance(step_result, tuple):
+            return step_result
+        return step_result, None
 
 
 class StepCollection:
@@ -56,7 +75,7 @@ class StepCollection:
         return sorted(self._collection.values(), key=attrgetter("priority"))
 
     def __iter__(self):
-        return map(attrgetter("function", "function_kwargs"), self.ordered_steps)
+        return iter(self.ordered_steps)
 
     def step_overview(self):
         steps = list(self.ordered_steps)
@@ -129,9 +148,19 @@ class DataSteps:
     def transformed(self):
         """Transformed data after all transformations."""
         new_data = self.original.copy()
-        for step, kwargs in self._steps:
-            new_data = step(new_data, **kwargs)
+        for step in self._steps:
+            new_data, _ = step.apply(new_data)
         return new_data
+
+    @property
+    def secondary_results(self):
+        results = {}
+        new_data = self.original.copy()
+        for step in self._steps:
+            new_data, secondary_result = step.apply(new_data)
+            if secondary_result is not None:
+                results[step.name] = secondary_result
+        return results
 
     def partial_transform(self, n: int):
         """Shows transformed data after the nth step.
@@ -142,8 +171,8 @@ class DataSteps:
                 data.
         """
         new_data = self.original.copy()
-        for step, kwargs in list(self._steps)[: n + 1]:
-            new_data = step(new_data, **kwargs)
+        for step in list(self._steps)[: n + 1]:
+            new_data, _ = step.apply(new_data)
         return new_data
 
     def set_original(self, original: pd.DataFrame) -> None:

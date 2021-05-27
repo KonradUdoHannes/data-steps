@@ -18,7 +18,7 @@ some required cleaning steps become apparent
 After wrapping a pandas DataFrame in a `DataSteps`
 class. The following features are available.
 
-- register data transformatios with the instances `.step`
+- register data transformations with the instances `.step`
     decorator
 - get an overview of the registered steps with `.steps`
 - inspect the original data the fully transformed data

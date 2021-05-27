@@ -120,3 +120,28 @@ def test_step_invalid_function():
 
     with pytest.raises(ValueError):
         Step(priority=1, function=no_arg_function)
+
+
+def test_apply_step_no_side_result():
+    def inc(x):
+        return x + 1
+
+    res, side_result = Step(priority=1, function=inc).apply(5)
+    assert res == 6
+    assert side_result is None
+
+
+def test_apply_step_side_result():
+    def sum_len(x):
+        return sum(x), len(x)
+
+    res, side_result = Step(priority=1, function=sum_len).apply([1, 2, 3])
+    assert res == 6
+    assert side_result == 3
+
+
+def test_step_name():
+    def sample_function(dummy):
+        ...
+
+    assert Step(priority=1, function=sample_function).name == "sample_function"
