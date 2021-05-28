@@ -24,12 +24,30 @@ def test_orig_frame(raw_frame):
     def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
-    print(data._steps._collection)
-
     assert data.original.equals(raw_frame)
     assert len(data.steps) == 1
     assert not data.transformed.equals(raw_frame)
     assert data.original.pipe(inc_col1).equals(data.transformed)
+
+
+def test_set_original(raw_frame):
+    data = DataSteps()
+    data.set_original(raw_frame)
+    assert data.original.equals(raw_frame)
+
+
+def test_secondary_results(raw_frame):
+    data = DataSteps(raw_frame)
+    assert len(data.secondary_results) == 0
+
+    @data.step(has_secondary_result=True)
+    def inc_col1(frame):
+        return frame.assign(Col1=lambda df: df["Col1"] + 1), frame.Col1.sum()
+
+    assert len(data.steps) == 1
+    assert len(data.secondary_results) == 1
+    assert "inc_col1" in data.secondary_results
+    assert raw_frame.Col1.sum() == data.secondary_results["inc_col1"]
 
 
 def test_empty_steps(raw_frame):

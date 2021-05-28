@@ -135,7 +135,11 @@ def test_apply_step_side_result():
     def sum_len(x):
         return sum(x), len(x)
 
-    res, side_result = Step(priority=1, function=sum_len).apply([1, 2, 3])
+    res, side_result = Step(
+        priority=1,
+        function=sum_len,
+        has_secondary_result=True,
+    ).apply([1, 2, 3])
     assert res == 6
     assert side_result == 3
 

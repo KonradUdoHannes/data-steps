@@ -8,7 +8,7 @@ def test_step_collectio_add():
         pass
 
     assert len(sc._collection) == 0
-    sc.add_step(sample_function, priority=3)
+    sc._add_step(sample_function, priority=3)
     assert len(sc._collection) == 1
     assert "sample_function" in sc._collection
     assert sc._collection["sample_function"].priority == 3
@@ -20,11 +20,16 @@ def test_step_collection_overview():
     def sample_function(dummy):
         pass
 
-    sc.add_step(sample_function, priority=3)
-    assert not sc.step_overview().empty
+    sc._add_step(sample_function, priority=3)
+    overview = sc.step_overview()
+    assert not overview.empty
+    assert "function_name" in overview
+    assert "function_kwargs" in overview
+    assert "priority" in overview
+    assert "has_secondary_result" in overview
 
 
-def test_riority_adding():
+def test_priority_adding():
     sc = StepCollection()
 
     def sample_function_low_prio(dummy):
@@ -36,9 +41,9 @@ def test_riority_adding():
     def sample_function_high_prio(dummy):
         pass
 
-    sc.add_step(sample_function_low_prio, priority=5)
-    sc.add_step(sample_function_high_prio, priority=1)
-    sc.add_step(sample_function_mid_prio, priority=3)
+    sc._add_step(sample_function_low_prio, priority=5)
+    sc._add_step(sample_function_high_prio, priority=1)
+    sc._add_step(sample_function_mid_prio, priority=3)
 
     ordered_steps = sc.ordered_steps
 
@@ -54,8 +59,8 @@ def test_reregister_no_doubles():
     def sample_function(dummy):
         pass
 
-    sc.add_step(sample_function, priority=5)
-    sc.add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=5)
     assert len(sc.ordered_steps) == 1
 
 
@@ -66,8 +71,8 @@ def test_priority_update():
     def sample_function(dummy):
         pass
 
-    sc.add_step(sample_function, priority=5)
-    sc.add_step(sample_function, priority=3)
+    sc._add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=3)
     assert sc.ordered_steps[0].priority == 3
 
 
@@ -80,13 +85,13 @@ def test_function_update():
 
     DUMMY_VALUE = 0
 
-    sc.add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=5)
     assert not sc.ordered_steps[0].function(DUMMY_VALUE)
 
     def sample_function(dummy):
         return True
 
-    sc.add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=5)
     assert sc.ordered_steps[0].function(DUMMY_VALUE)
 
 
@@ -97,9 +102,9 @@ def test_remove_function():
     def sample_function(dummy):
         pass
 
-    sc.add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=5)
     assert len(sc.ordered_steps) == 1
-    sc.remove_step(sample_function)
+    sc._remove_step(sample_function)
     assert len(sc.ordered_steps) == 0
 
 
@@ -116,7 +121,7 @@ def test_update_step_kwargs():
     def sample_function(dummy, a=10):
         pass
 
-    sc.add_step(sample_function, priority=5)
+    sc._add_step(sample_function, priority=5)
     assert sc._collection["sample_function"].function_kwargs["a"] == 10
     sc.update_step_kwargs("sample_function", {"a": 30})
     assert sc._collection["sample_function"].function_kwargs["a"] == 30

@@ -5,11 +5,14 @@ from typing import Callable
 
 import pandas as pd
 
+from data_steps.export import DataStepsStringExport
+
 
 @dataclass
 class Step:
     priority: int
     function: Callable
+    has_secondary_result: bool = False
     function_kwargs: dict = field(init=False)
 
     def __post_init__(self):
@@ -46,7 +49,7 @@ class Step:
         such that the return value is always a two tuple.
         """
         step_result = self.function(data, **self.function_kwargs)
-        if isinstance(step_result, tuple):
+        if self.has_secondary_result:
             return step_result
         return step_result, None
 
@@ -55,16 +58,17 @@ class StepCollection:
     def __init__(self):
         self._collection: dict[str, Step] = {}
 
-    def update_step(self, func, priority, active=True):
+    def update_step(self, func, priority, **kwargs):
+        active = kwargs.pop("active", True)
         if active:
-            self.add_step(func, priority)
+            self._add_step(func, priority, **kwargs)
         elif func.__name__ in self._collection:
-            self.remove_step(func)
+            self._remove_step(func)
 
-    def add_step(self, func, priority):
-        self._collection[func.__name__] = Step(priority, func)
+    def _add_step(self, func, priority, **kwargs):
+        self._collection[func.__name__] = Step(priority, func, **kwargs)
 
-    def remove_step(self, func):
+    def _remove_step(self, func):
         del self._collection[func.__name__]
 
     def update_step_kwargs(self, function_name, kwargs):
@@ -86,7 +90,7 @@ class StepCollection:
             pd.DataFrame(list(self.ordered_steps))
             .assign(function_name=lambda df: df["function"].map(lambda x: x.__name__))
             .drop(["function"], axis=1)
-            .loc[:, ["priority", "function_name", "function_kwargs"]]
+            .loc[:, ["priority", "function_name", "function_kwargs", "has_secondary_result"]]
         )
         overview.index.rename("application_order", inplace=True)
         return overview
@@ -104,7 +108,7 @@ class DataSteps:
             raise Exception("Original data not set. ")
         return self._original
 
-    def step(self, function=None, *, priority=5, active=True):
+    def step(self, function=None, *, priority=5, active=True, **kwargs):
         """Decorator registering functions as steps.
 
         The decorator can be used in a bare version, i.e.
@@ -121,10 +125,18 @@ class DataSteps:
             active (bool, optional): Function is registered
                 as a step. Defaults to True.
 
+        Kwargs:
+            has_secondary_result (bool, optional): If True the decorated
+            function is expected to return a 2-tuple. The first entry of
+            the tuple is expected to be the result that is passed along the
+            transformation steps. The second entry is the secondary result.
+            This is not passed along and is collected seperately in the
+            secondary_results property. Usage might be for diagnostic
+            summaries figure objects for plots etc.
         """
 
         def register_function(func):
-            self._steps.update_step(func, priority=priority, active=active)
+            self._steps.update_step(func, priority=priority, active=active, **kwargs)
             return func
 
         if function is None:
@@ -175,11 +187,11 @@ class DataSteps:
             new_data, _ = step.apply(new_data)
         return new_data
 
-    def set_original(self, original: pd.DataFrame) -> None:
+    def set_original(self, original: pd.DataFrame) -> "DataSteps":
         """Set the original of the data.
 
         This method is intended to to set original
-        data in case a DataSetps instnace is created
+        data in case a DataSteps instnace is created
         without the data. This helps to create instances
         in modules and scripts, where the data will only be
         set after import.
@@ -188,7 +200,7 @@ class DataSteps:
         such that it can coveniently be chained with the
         with the transform property when needed.
         """
-        self._original
+        self._original = original
         return self
 
     def update_step_kwargs(self, step_name: str, kwargs):
@@ -210,3 +222,27 @@ class DataSteps:
                 for the update.
         """
         self._steps.update_step_kwargs(step_name, kwargs)
+
+    def export(self, name=None, without_data_steps=False):
+        """Exports Data Steps as a String.
+
+        DataSteps are supposed to help with work in
+        notebooks. In order to help convert an exploratory
+        analysis into a module this function helps to obtain
+        strings that can be copied into a module. The string
+        is intended to be copied manually. In order to
+        work nicely with notebooks this function does not
+        return a string directly but an Object with an
+        implmeneted __repr__ method. To get the string
+        object use pythons built in `str` function.
+
+        Args:
+            name (str, optional): Replace the name of the
+                data steps object to be used for the export.
+            without_data_teps (bool): Creates an export that does
+                not rely on the datasteps module. Instead a
+                function is created that applies all the
+                transformations. The default name of the function
+                is the name of the DataSteps instance.
+        """
+        return DataStepsStringExport(self._steps, name, without_data_steps=without_data_steps)
