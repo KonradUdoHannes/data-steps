@@ -11,7 +11,7 @@ syntax that is easy to maintains when data
 transfromation steps get changed or added
 throughout the project. A prime example
 is data cleaning where only later in the project
-some required cleaning steps become apparent
+some required cleaning steps become apparent.
 
 ## Features
 
@@ -25,6 +25,9 @@ class. The following features are available.
     and any partially transformed data in between
 - change parameters of registered steps
 - interactively redefine or deactivate steps in jupyter notebooks
+- register steps that return secondary results, i.e. the main result is passed alon
+    the pipeline, whereas the secondary result is stored seperately
+- convert data steps pipelines to strings that can more easily be integrated into a non-eda code-base
 
 ## Usage Example
 

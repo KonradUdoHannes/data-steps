@@ -166,9 +166,27 @@ class DataSteps:
 
     @property
     def secondary_results(self):
+        """All secondary results after all transformations."""
         results = {}
         new_data = self.original.copy()
         for step in self._steps:
+            new_data, secondary_result = step.apply(new_data)
+            if secondary_result is not None:
+                results[step.name] = secondary_result
+        return results
+
+    def partial_secondary_results(self, n: int):
+        """Shows secondary resutls data after the nth step.
+
+        Args:
+            n (int): Step after which to return
+                the data. Using -1 as is allowed to support
+                the same arguments as partial_transform, but
+                will always return an empty dictionary.
+        """
+        results = {}
+        new_data = self.original.copy()
+        for step in list(self._steps)[: n + 1]:
             new_data, secondary_result = step.apply(new_data)
             if secondary_result is not None:
                 results[step.name] = secondary_result
@@ -235,6 +253,13 @@ class DataSteps:
         return a string directly but an Object with an
         implmeneted __repr__ method. To get the string
         object use pythons built in `str` function.
+
+        The default export that uses DataSteps itself
+        is intended to be used as followes. It defines
+        a DataSteps instance without original data set,
+        but with all stepts registered. This instance can
+        then be imported from a module and used by setting
+        the original data with the .set_original method.
 
         Args:
             name (str, optional): Replace the name of the

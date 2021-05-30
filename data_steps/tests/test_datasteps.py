@@ -104,6 +104,25 @@ def test_partial_application(raw_frame):
     assert "Col5" in data.partial_transform(1)
 
 
+def test_partial_secondary_results(raw_frame):
+    data = DataSteps(raw_frame)
+
+    @data.step(has_secondary_result=True)
+    def add_col4(frame):
+        return frame.assign(Col4="constant"), "result_1"
+
+    @data.step(priority=10, has_secondary_result=True)
+    def add_col5(frame):
+        return frame.assign(Col5="constant"), "result_2"
+
+    assert len(data.partial_secondary_results(-1)) == 0
+    assert len(data.partial_secondary_results(0)) == 1
+    assert data.partial_secondary_results(0)["add_col4"] == "result_1"
+    assert len(data.partial_secondary_results(1)) == 2
+    assert data.partial_secondary_results(1)["add_col4"] == "result_1"
+    assert data.partial_secondary_results(1)["add_col5"] == "result_2"
+
+
 def test_step_with_args(raw_frame):
     data = DataSteps(raw_frame)
 

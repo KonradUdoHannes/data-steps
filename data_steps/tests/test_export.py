@@ -134,6 +134,19 @@ def test_export_equivalence(raw_frame):
     )
 
 
+def test_export_equivalence_secondary_results(raw_frame):
+    data = DataSteps(raw_frame)
+
+    @data.step(has_secondary_result=True)
+    def inc_col1(frame):
+        return frame.assign(Col1=lambda df: df["Col1"] + 1), "secondary_value"
+
+    assert_reimport(data, data.export("reimport"), "reimport")
+    assert_independent_reimport(
+        data, data.export("my_transformation", without_data_steps=True), "my_transformation"
+    )
+
+
 def test_export_equivalence_additional_parameters(raw_frame):
     data = DataSteps(raw_frame)
 
