@@ -25,8 +25,9 @@ class Step:
         combined_arg_defaults = reversed(list(zip(reversed(argspec.args), reversed(args_defaults))))
 
         self.function_kwargs = {
-            arg: value for arg, value in combined_arg_defaults
-        } | kwonly_defaults
+            **{arg: value for arg, value in combined_arg_defaults},
+            **kwonly_defaults,
+        }
 
     @property
     def name(self):
@@ -36,7 +37,8 @@ class Step:
         for key in kwargs:
             if key not in self._expected_kw:
                 raise ValueError(f"Unexpected argument {key} for {self.function.__name__}")
-        self.function_kwargs |= kwargs
+        for key in kwargs:
+            self.function_kwargs[key] = kwargs[key]
 
     def apply(self, data):
         """Returns the results of applying the steps.
