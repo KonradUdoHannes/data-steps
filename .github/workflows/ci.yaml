@@ -22,7 +22,7 @@ jobs:
       run: |
         package_version=$(cat data_steps/VERSION)
         python setup.py sdist
-        pip install "dist/data_steps-$package_version.tar.gz"
+        pip install "dist/data-steps-$package_version.tar.gz"
         pip install -r requirements_dev.txt
 
     - name: Run pre-commit hooks
