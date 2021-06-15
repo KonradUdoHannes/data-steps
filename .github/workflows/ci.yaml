@@ -18,9 +18,11 @@ jobs:
       with:
         python-version: 3.9.2
 
-    - name: Install library and qa tools
+    - name: Install package and install library and qa tools
       run: |
-        pip install .
+        package_version=$(cat data_steps/VERSION)
+        python setup.py sdist
+        pip install "dist/data_steps-$package_version.tar.gz"
         pip install -r requirements_dev.txt
 
     - name: Run pre-commit hooks
@@ -28,5 +30,5 @@ jobs:
         pre-commit install
         pre-commit run --all-files
 
-    - name: Run Tests
-      run: pytest
+    - name: Run Tests on enstalled package
+      run: pytest --rootdir=$HOME --pyargs data_steps

@@ -2,5 +2,7 @@ include data_steps/VERSION
 include requirements.txt
 include README.md
 include HISTORY.md
+recursive-include data_steps/tests *
 global-exclude .ipynb_checkpoints/*
+global-exclude __pychache__/*
 global-exclude *.py[cod]
