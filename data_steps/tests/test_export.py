@@ -31,8 +31,8 @@ def test_extract_name():
 
     data = DataSteps()
 
-    @data.step
-    def inc_col1(frame):  # noqa: F811
+    @data.step  # noqa: F811
+    def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
     dsse = DataStepsStringExport(data._steps, export_name="exported_pipeline")
@@ -40,8 +40,8 @@ def test_extract_name():
 
     important_data = DataSteps()
 
-    @important_data.step
-    def inc_col1(frame):  # noqa: F811
+    @important_data.step  # noqa: F811
+    def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
     dsse = DataStepsStringExport(important_data._steps)

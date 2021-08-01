@@ -63,8 +63,8 @@ def test_redefined_step(raw_frame):
     def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
-    @data.step
-    def inc_col1(frame):  # noqa: F811
+    @data.step  # noqa: F811
+    def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
     assert len(data.steps) == 1
@@ -78,8 +78,8 @@ def test_removed_step(raw_frame):
     def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
-    @data.step(active=False)
-    def inc_col1(frame):  # noqa: F811
+    @data.step(active=False)  # noqa: F811
+    def inc_col1(frame):
         return frame.assign(Col1=lambda df: df["Col1"] + 1)
 
     assert len(data.steps) == 0
